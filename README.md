@@ -1,12 +1,58 @@
-# ORIE 5355 Project 2026
+# ORIE 5355 Project — Fall 2026
 
-[Project instructions](https://docs.google.com/document/d/1MSqzgD7nfi8dm48dM6qNIZkDNmIZmcag6WWIjUcZ0O4)
+Requirements, deliverables, four-person responsibilities, and implementation schedule.
 
-Use this one repository for all project parts.
+This README is a team execution guide, not the final project report. It documents requirements and planned work; it does not claim that the implementation has already passed evaluation.
 
-## Setup
+## 1. Official Sources and Scope
 
-Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then run these commands from this folder:
+- [Original course instructions linked by the starter repository](https://docs.google.com/document/d/1MSqzgD7nfi8dm48dM6qNIZkDNmIZmcag6WWIjUcZ0O4)
+- [Assignment document supplied by the team](https://docs.google.com/document/d/1uezaQ6MW5MamcCgAhuU35hrG0_C4qIFuz0dYfsXWFnY/edit?tab=t.0)
+- [Classroom50 assignment](https://classroom50.org/orie5355-fa26-project/orie-5355-fall-2026-class-project/assignments/project/accept)
+- [Team registration](https://forms.gle/2xs797KvX3KfNW8Z7)
+
+Both instruction documents were checked on November 2, 2026. The instructions are a living document; check EdStem for updates. Official instructions and staff announcements take precedence over this README.
+
+Sections 2–8 summarize course requirements and guidance. Sections 9–11 define internal team arrangements, not additional course requirements.
+
+Use one official Classroom50 team repository for all project parts. This checkout points to `anjun745/orie5355-team-project`; B must confirm whether it is the assigned submission repository. Pushing to an unrelated development repository does not constitute submission.
+
+## 2. Objective and Grading
+
+Estimate purchase probability from customer covariates and offered prices, then develop:
+1. Personalized static prices without capacity constraints or competition.
+2. Dynamic prices with limited inventory and periodic replenishment.
+3. Competition-aware prices with capacity constraints.
+4. Optionally, static prices with a fairness penalty.
+
+For static pricing, maximize `p * P(purchase | customer covariates, p)`. For online pricing, maximize total revenue while accounting for inventory and, in Part 2, competition.
+
+| Component | Points | Assessment |
+| --- | --- | --- |
+| Part 1 | 0–6 | Strategy quality and effectiveness, substantial effort, performance, code, and explanation in the report |
+| Part 2 | 0–6 | The same dimensions applied to competition |
+| Project report | 0–6 | Clear discussion of strategy and evaluation, thoughtful reflection, evidence of effort and understanding |
+| Oral exam | 0–4 | Knowledgeable explanation of the codebase, Part 1 strategy, and partial progress on Part 2 |
+| **Total** | **22** | |
+
+Competition performance alone does not account for a majority of the grade. Accurate predictions, high sales volume, or many match wins are not substitutes for revenue evaluation. The autograder checks format and compatibility, not overall strategy quality or expected grades.
+
+## 3. Official Deadlines
+
+| Component | Official deadline |
+| --- | --- |
+| Part 1 | November 12, 2026, 11:59 p.m. |
+| Oral exam | December 2, 2026; specific session time to be confirmed |
+| Part 2 | December 6, 2026, 5:00 p.m. |
+| Report early-submission bonus | December 11, 2026, 5:00 p.m.; instructions state a 5% bonus |
+| Project report | December 12, 2026, 11:59 p.m. |
+| Optional fairness bonus | With the report, by the report deadline |
+
+Times reproduce the instructions. Internal planning uses America/New_York; confirm the official deadline timezone on the course platform. No late days may be used. Contact staff about submission-access problems at least five days before each relevant deadline.
+
+## 4. Setup
+
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then run from the repository root:
 
 ```bash
 uv venv --python 3.13
@@ -15,356 +61,273 @@ uv pip install --python .venv ipykernel
 uv pip check --python .venv
 ```
 
-Select `.venv` as the notebook kernel in VS Code. Do not submit `.venv`.
+Select `.venv` as the notebook kernel in VS Code. Do not submit `.venv`. Use the prescribed versions in `requirements.txt` and Python's standard library.
 
----
+## 5. Part 1 Requirements and Deliverables
 
-## ORIE 5355 课程项目执行规格说明（中文版）
+### Demand estimation
 
-版本：v1.0
-整理日期：2026 年 11 月 2 日
-适用团队：4 人，暂以 A、B、C、D 表示，团队自行替换为姓名。
-用途：统一项目要求、交付内容、任务边界、验收标准与内部进度；不是课程最终报告。
+- Train on supplied covariates, offered prices, and purchase decisions in `data/train_prices_decisions_2026.csv`.
+- Start with `model_training/purchase_model_baseline.ipynb`; consult `data/data_helpers_2026.ipynb`.
+- Evaluate purchase predictions on held-out purchase-decision data.
+- Commit training code, preprocessing, and feature construction under `model_training/`.
+- Save models and required supporting data under `agents/helper_files_here/`.
 
-### 1. 文档依据与使用规则
+No particular model family is mandatory. Logistic regression, grid search, and dynamic programming are suggested approaches rather than required algorithms.
 
-- [课程作业说明（团队提供的版本）](https://docs.google.com/document/d/1uezaQ6MW5MamcCgAhuU35hrG0_C4qIFuz0dYfsXWFnY/edit?tab=t.0)。本说明根据 2026 年 11 月 2 日读取的内容整理。
-- [当前开发仓库](https://github.com/anjun745/orie5355-team-project)。是否为正式 Classroom50 提交仓库尚未确认。
-- [Classroom50 项目入口](https://classroom50.org/orie5355-fa26-project/orie-5355-fall-2026-class-project/assignments/project/accept)。
-- [团队登记表](https://forms.gle/2xs797KvX3KfNW8Z7)。每队提交一次，队名只含小写字母与数字。
+### Unconstrained static pricing
 
-本文将内容区分为“课程要求”和“团队约定”。算法选择、内部日期、实验次数及辅助文件名属于团队约定，并非教师额外规定。课程文档会更新；若发生冲突，以教师最新公告、课程文档和正式提交模板为准。
+Use `run_project_part1_static_2026.ipynb`. Generate validation prices for `data/validation_user_info_2026.csv` and call `evaluate_static_prices` from `pricing_helpers.py` to compare predicted and realized validation revenue.
 
-时间按美国纽约时间（America/New_York）安排。下列课程截止时刻照录原文；团队应核对课程平台采用的时区。未注明时刻的内部节点，约定当日 20:00 前完成。
-
-### 2. 项目目标与范围
-
-项目模拟平台卖家为依次到达的顾客定价，依次解决：
-
-1. 预测顾客在给定价格下的购买概率。
-2. 在无库存约束、无竞争条件下，选择个性化静态价格。
-3. 在有限库存、周期补货条件下进行动态定价。
-4. 在同时存在库存约束和竞争对手时定价。
-5. 可选：在静态定价中加入不同群体报价中位数差异的惩罚。
-
-核心优化目标是收入。Part 2 按各场对战的累计收入评价，不以赢得多少场比赛作为主要目标。不能只追求预测准确率或售出数量，必须检验最终收入表现。
-
-课程总分 22 分：Part 1 为 6 分、Part 2 为 6 分、报告为 6 分、口试为 4 分。评分还考虑策略、评测、投入程度和理解程度，竞赛表现不是唯一依据。
-
-### 3. 课程要求
-
-#### 3.1 Part 1：需求估计、静态定价与库存动态定价
-
-**需求估计**
-
-- 使用 `data/train_prices_decisions_2026.csv` 中的顾客特征、报价与购买决策训练购买概率模型。
-- 在留出的购买决策数据上检查模型预测。
-- 将训练代码、预处理及特征构建保存在 `model_training/`；供 agent 使用的模型与必要辅助数据放在 `agents/helper_files_here/`。
-- 可从 `model_training/purchase_model_baseline.ipynb` 开始，不要求固定使用某种模型。
-
-**无库存限制的静态定价**
-
-- 对顾客特征 x，选择价格 p，使预测收入 `p × P(购买 | x, p)` 尽可能高。
-- 使用 `data/validation_user_info_2026.csv` 生成验证价格，调用 `pricing_helpers.py` 的 `evaluate_static_prices` 比较预测与实际验证收入。
-- 对 `data/test_user_info_2026.csv` 的全部 50,000 位测试顾客生成提交价格。
-- 提交文件为 `agents/static_prices_submission.csv`，列名必须为：
+Generate final prices for all 50,000 customers described in `data/test_user_info_2026.csv`. Submit `agents/static_prices_submission.csv` with exactly these headers:
 
 ```csv
 user_index,price_item,expected_revenue
 ```
 
-- 每个测试顾客 ID 恰好出现一次，无缺失、重复或额外 ID；所有条目应为有限、非负数。
-- `expected_revenue` 是该报价乘以模型预测购买概率，不考虑库存或竞争。教师使用留出估值计算收入评分，填写更高的预测收入本身不会提高评分。
-- 验证集与测试集 ID 不同，不能将验证输出当作测试提交。
+- Include every test ID exactly once, without missing, extra, or duplicate customers.
+- All entries must be finite and nonnegative.
+- Expected revenue is the price multiplied by predicted purchase probability, without inventory constraints or competition.
+- Staff score revenue using held-out valuations; submitted revenue predictions do not determine that score.
+- Validation and test IDs differ. Do not submit validation prices as test prices.
 
-**库存约束下的动态定价**
+### Capacity-constrained pricing
 
-- 实现 `agents/agent_part1.py`，保留模板要求的方法名称和调用方式。
-- 每 20 位顾客形成一个补货周期；库存均匀随机重置为 7–20 件；周期结束时未售库存被丢弃。
-- 每次根据新顾客特征、上一轮销售、累计利润、当前库存和距下次补货的步数返回一个价格。
-- 使用 `run_project_part1_capacity_2026.ipynb` 验证；长实验建议运行 2,500 步，并在每次实验前重新创建环境与 agent。
-- 比较多次运行，关注收入、提前售罄和周期结束剩余库存。售罄早或有剩余库存是诊断信号，不能单独据此判定策略优劣。
+Implement `agents/agent_part1.py` while preserving required interfaces.
 
-#### 3.2 Part 2：有库存约束的竞争定价
+- One customer arrives per time step.
+- Every 20 customers, inventory resets to a uniformly random integer from 7 through 20.
+- Unsold stock is discarded at the end of each cycle.
+- Return one personalized price using the provided covariates, previous outcome, profits, inventories, and time until replenishment.
 
-- 实现 `agents/agent_part2.py`，在同一个正式团队仓库继续开发与提交。
-- 每场对战有两名卖家，持续 2,500 位顾客；双方每 20 位顾客同时补货，补货量相同，均匀随机取 7–20 件。
-- 双方分别对当前顾客报价。顾客从有库存且报价最低的卖家购买，前提是该价格不高于其估值；同价时随机选择有库存卖家。
-- 当前轮双方同时决策，不能假定知道对手当前报价；上一轮报价与购买结果可在后续决策中使用。
-- 使用 `run_project_part2_2026.ipynb`，针对多种对手与自身进行重复实验。
-- 最终比较跨对手、跨重复试验的收入，避免只对一种固定对手调参。
+Evaluate with `run_project_part1_capacity_2026.ipynb`. The course recommends repeated runs and `T = 2500` for longer evaluation; recreate the environment and agent for every run. Examine revenue, stockouts, and leftover inventory together.
 
-#### 3.3 选做：公平性静态定价
+| Required deliverable | Owner | Reviewer |
+| --- | --- | --- |
+| Training, preprocessing, and feature-construction code in `model_training/` | A | B |
+| Models/supporting files in `agents/helper_files_here/` | A | C/D |
+| `agents/static_prices_submission.csv` | B | D |
+| `agents/agent_part1.py` | C | D |
 
-- 无库存约束、无竞争，分别处理 `gamma = 0、0.1、0.9`。
-- 分组依据为第一维特征 `Covariate1` 取 0 或 1。
-- 目标为：`平均收入 − gamma × |群体 0 报价中位数 − 群体 1 报价中位数|`。
-- 中位数统计全部顾客的报价，包括未购买顾客。
-- 在验证集计算收入、两个中位数、惩罚与最终分数，并与 gamma = 0 基线比较。
-- 提交完成的 `run_project_bonus_fairness_2026.ipynb` 及 `agents/bonus_fairness_prices.csv`，随报告截止。
-- CSV 包含全部测试顾客且每位恰好一次，所有条目有限、非负；列名为：
+Commit reproducible price-generation code as well. Practice notebooks may be edited, but the submission must not rely on modifications to supplied simulator/helper files.
+
+## 6. Part 2 Requirements and Deliverables
+
+Submit `agents/agent_part2.py` and all required supporting files under `agents/helper_files_here/` in the same official team repository.
+
+- Two sellers compete over 2,500 customer arrivals.
+- Every 20 customers, both sellers replenish to the same quantity, drawn uniformly from 7 through 20.
+- Both agents quote before the current outcome is revealed.
+- A customer buys from the stocked seller offering the lowest price if it does not exceed the customer's valuation. Ties among stocked sellers are broken randomly.
+- Subsequent observations reveal previous prices and purchase outcomes. The opponent's current unrevealed quote is not available.
+
+The tournament is round-robin, with repeated matchups and revenues averaged across trials. The overall objective is aggregate revenue across games, not the number of wins.
+
+Use `run_project_part2_2026.ipynb`. Test against varied opponents and the agent itself. D owns implementation; C supports inventory logic, A supports modeling, and B handles routine batch evaluation and final integration after handoff.
+
+## 7. Optional Fairness Bonus
+
+This is static pricing without inventory constraints or competition, using `Covariate1` (feature 0) as the protected attribute and `gamma = 0, 0.1, 0.9`.
+
+```text
+score = average revenue per customer - gamma * abs(median0 - median1)
+```
+
+The medians are offered-price medians for customers with protected attribute 0 and 1, including nonbuyers.
+
+Use `run_project_bonus_fairness_2026.ipynb` to calculate realized validation revenue, group medians, penalty, and score for each gamma, compared with the gamma-zero baseline.
+
+Submit the completed notebook and `agents/bonus_fairness_prices.csv` with:
 
 ```csv
 user_index,price_item,expected_revenue,price_item_gamma_0.1,expected_revenue_gamma_0.1,price_item_gamma_0.9,expected_revenue_gamma_0.9
 ```
 
-#### 3.4 运行、数据与提交限制
+Include each test customer exactly once, with finite, nonnegative entries. In the human-written report, explain changes across gamma, what matching medians does and does not imply, and how the approach would differ if entire price distributions had to match. The last comparison is conceptual and needs no extra code.
 
-- 按仓库要求使用 Python 3.13、`requirements.txt` 指定版本和 Python 标准库；不得自行增加未获批准的依赖。
-- 运行时平均每位顾客的决策时间最多 0.5 秒；仅使用一个 CPU 核，不使用 multiprocessing。涉及底层数值库时也要控制线程数。
-- 提交的运行代码不得联网，也不得依赖仓库之外的文件、服务或 API。
-- 仅从提供的价格、购买决策与允许的模拟器反馈学习；不得提取真实估值或模拟器内部信息用于训练。
-- 验证估值只通过课程提供的评测流程用于评测，不将其作为监督标签训练模型。
-- 不得修改模拟器执行上下文或内部状态，不访问、修改其他 agent 的文件或私有变量。
-- 不重命名 `agents/agent_part1.py`、`agents/agent_part2.py` 或 `agents/helper_files_here/`；保留规定的 agent 接口。
-- 使用相对位置加载模型，建议相对于 agent 文件构建路径，不能使用个人电脑绝对路径。
-- 必须提交实际模型与辅助文件，不能依赖 Git LFS 才能读取；不提交 `.venv`。
-- 可修改练习 notebook 做本地实验，但最终 agent 不能依赖对课程模拟器或辅助文件的修改。
-- 保留逐步 Git 提交记录。正式提交是将最终版本推送到 Classroom50 团队仓库；仅本地 commit 或推送到未关联的个人仓库不算完成。
-- autograder 检查格式与兼容性，不是可靠的收益排行榜。推送默认分支后检查 Classroom50 与 GitHub Actions。
-- 课程按每部分截止前推送的完整仓库快照评分；后续修改共享模型不会覆盖已截止部分的快照。
-- 所有部分均不能使用 late days。提交访问问题至少在相应截止前五天联系教学团队。
+## 8. Runtime, Submission, and Academic Rules
 
-#### 3.5 口试与报告
+### Runtime and data
 
-- 口试需解释 Part 1 和 Part 2 的阶段性进展，不能只理解自己负责的代码。
-- 报告使用课程指定模板；四名成员自行撰写、互相审阅并理解全部内容。
-- **课程允许 AI 辅助编程，但禁止项目报告任何组成部分使用 LLM。** 本文是团队执行 spec，不应复制为报告正文。
-- 报告需通过课程指定表单提交，并将报告副本共享给教学团队，提供编辑权限以便查看编辑历史：`ngarg@cornell.edu`、`edong@cs.cornell.edu`、`vr359@cornell.edu`。
-- 当前读取的课程说明中，报告提交表单尚待补充；最终报告模板链接、表单和口试具体时段由团队从课程页面确认，不在本文猜测。
+- Average decision time must be at most 0.5 seconds per customer on the grading machine.
+- Use one CPU core; no multiprocessing or parallel-loop components. Control numerical-library threading accordingly.
+- Runtime code must not access the internet, external APIs, or resources outside the repository and approved packages.
+- Learn only from supplied prices/purchase decisions and permitted simulator feedback. Do not extract valuations or simulator internals for training. Use supplied validation valuations through the intended evaluation workflow.
+- Do not alter the simulator's execution context/internal state or access or modify other agents' files/private variables.
+- Preserve required method names, `agents/agent_part1.py`, `agents/agent_part2.py`, and `agents/helper_files_here/`. Additional functions are allowed.
+- Use portable paths relative to the agent/repository. Include all runtime artifacts; serialized custom classes must be importable.
+- Required files must not depend on Git LFS. Avoid unnecessarily large artifacts; instructions caution about files around or above 50 MB.
 
-### 4. 交付内容与验收责任
+### Team registration and code submission
 
-| 阶段 | 交付内容 | 主责 | 复核 | 验收条件 |
-| --- | --- | --- | --- | --- |
-| Part 1 | `model_training/` 中训练与预处理代码 | A | B | 可按说明复现模型；特征顺序和依赖明确 |
-| Part 1 | `agents/helper_files_here/` 中模型及必要文件 | A | C | 干净环境可加载，与最终 agent 输入兼容 |
-| Part 1 | 静态定价实现与验证结果 | B | A | 能复现验证收入并解释预测收入差异 |
-| Part 1 | `agents/static_prices_submission.csv` | B | D | 列名、ID 覆盖、非负有限数值均正确 |
-| Part 1 | `agents/agent_part1.py` | C | D | 完整运行、使用库存与补货信息、满足接口与时间限制 |
-| Part 1 | 统一评测代码及实验记录（团队内部） | D | C | 多次运行可复现，可比较候选策略 |
-| Part 2 | `agents/agent_part2.py` 及必要支持文件 | D | C | 对多种对手可运行，满足资源限制与数据规则 |
-| Part 2 | 对战结果与提交检查（团队内部） | B | A | 跨对手汇总收入，确认正式仓库自动检查通过 |
-| 选做 | bonus notebook 与七列 CSV | B | A | 三个 gamma、测试 ID 和验证指标齐全 |
-| 口试 | 全员讲解与演练 | 全员 | 两两互查 | 每人可解释模型、静态价格、库存与竞争策略 |
-| 报告 | 人工撰写的课程模板副本 | 全员 | 全员互审 | 回答模板问题、提交表单、共享权限正确 |
+1. Register one team of up to four people. Team names contain only lowercase letters and digits. Staff invite registered GitHub usernames to `orie5355-fa26-project`.
+2. Accept organization invitations. One person creates the Classroom50 group/repository; all teammates join that group and each accept the assignment. Classroom50 assigns the repository name.
+3. Keep incremental commits and push the intended version to the official repository before each deadline.
+4. Staff grade the full repository snapshot pushed by each part's deadline. Later shared-model/code changes do not alter earlier snapshots. Rare resubmissions may be rerun as described by staff, but do not fully replace earlier grades or extend deadlines.
+5. Pushing the default branch triggers separate Part 1/Part 2 format and compatibility checks. Check Classroom50 Group submission and autograder details; use GitHub Actions for detailed failures.
+6. Fix failures for the relevant part. These checks run on only a small customer sample and do not estimate competition performance.
 
-辅助评测目录、实验日志文件名与模型文件名可由团队确定；`purchase_model.pkl` 是当前模板使用的名称，不是另加的课程强制名称。若修改模型名称，A 必须同步通知 B、C、D 并修改所有加载位置。
+### AI policy, oral exam, and report
 
-### 5. 四人具体分工
+AI assistance is permitted for coding. All members must understand and be able to explain all submitted work.
 
-#### 5.1 A：需求建模负责人
+**LLMs are prohibited for every component of the project report.** Members must write and review it themselves. Do not copy AI-generated material from this execution guide into the report.
 
-**Part 1 工作**
+Create a copy of the course's **Final Report Template 2026**, answer its specific questions, submit through the course's report form, and give editor access to:
 
-1. 检查训练字段、缺失值、价格范围、购买率与特征分布，明确可用输入和标签。
-2. 固定训练/验证划分与随机种子，避免训练与评测数据混用。
-3. 先交付一个可用基线，再比较 Logistic Regression、树模型等允许的候选模型；不要求全部尝试。
-4. 检查概率校准、不同价格区间的预测，以及模型给出的需求曲线是否合理；与 B 联合确认收入表现。
-5. 提供统一的购买概率预测接口，封装全部预处理，保存模型、参数和训练代码。
-6. 说明模型特征顺序、输入类型、类别定义、加载方法与已知局限。
+- `ngarg@cornell.edu`
+- `edong@cs.cornell.edu`
+- `vr359@cornell.edu`
 
-**Part 2 工作**：根据 B、D 的实验结果改进需求模型，协助分析对手报价可预测性；任何模型变更必须重新验证下游 agent。
+Staff may inspect edit history for contributions and AI-policy compliance. The fetched instructions name the template without exposing its question text and still mark the report form and optional teammate-feedback form as pending. Obtain the actual template and latest form from the course; this README does not replace them.
 
-**验收**：B 能直接调用模型完成批量静态定价，C、D 能直接用于在线决策；概率有限且在 [0,1]，干净环境可加载。
+The December 2 oral exam covers Part 1 and partial progress on Part 2. Every member must prepare to explain the whole system.
 
-#### 5.2 B：静态定价与提交集成负责人
+## 9. Four-Person Division of Work — Internal Agreement
 
-**Part 1 工作**
+Replace member labels with names and GitHub usernames. D is the evaluation and competition role identified by the user.
 
-1. 使用 A 的预测接口实现静态收入最大化，确定候选价格范围、搜索精度和批量计算方式。
-2. 用课程评测函数比较预测收入与实际验证收入，排查模型过度乐观、价格边界与异常值。
-3. 固化价格生成流程，输出测试集全部顾客的三列 CSV，并保留可复现的生成代码。
-4. 将静态定价函数交给 C、D 复用；与 A 交叉检查特征和概率接口。
-5. 负责集成清单、正式提交仓库核对和推送后的自动检查跟踪；D 协助 Part 1 最终验收。
-
-**Part 2 工作**：接手 D 搭建的主要评测执行工作，运行对手组合与多种子实验，整理结果、定位回归并负责最终提交集成。主任务稳定后，再主导公平定价 bonus，由 A 支持。
-
-**验收**：提交 CSV 正确、生成流程可复现；D 不必同时承担全部竞争策略开发和重复评测。
-
-#### 5.3 C：库存动态定价负责人
-
-**Part 1 工作**
-
-1. 理解模板观测、库存刷新和时间计数，先复现基线。
-2. 复用 A 的需求模型和 B 的静态价格，构建库存感知策略。
-3. 优先实现一个清晰可运行的库存启发式，再考虑动态规划或库存机会成本方法；依据实验决定是否保留复杂方案。
-4. 处理低库存、零库存、临近补货、周期切换和首次观测等边界情况。
-5. 与 D 比较收入、提前售罄和剩余库存，完成 `agent_part1.py` 并检查决策耗时。
-
-**Part 2 工作**：将库存决策逻辑交给 D，协助处理竞争环境下的库存机会成本、对手缺货和补货边界，复核最终竞争 agent。
-
-**验收**：完整 2,500 步实验可运行；能解释相对静态基线的改动及实验依据。若复杂策略无稳定收益，保留可靠基线。
-
-#### 5.4 D：评测框架与竞争定价负责人
-
-**Part 1 工作**
-
-1. 前两三天先搭统一实验框架，不能跳过 Part 1 评测直接只做 Part 2。
-2. 固定实验配置和随机种子，每次重新创建环境与 agent，记录版本、模型、策略参数和结果。
-3. 汇总总收入、每顾客收入、收入波动、剩余库存、售罄时间及决策耗时，检查运行异常。
-4. 与 C 比较基线与改进策略，并协助 B 检查提交格式、依赖和自动检查。
-
-**Part 2 工作**
-
-1. 主导 `agent_part2.py`，从可运行竞争基线开始，再逐步加入对手历史与库存信息。
-2. 构建或复用固定报价、无竞争最优价、激进低价、自适应报价及自身等测试对手。
-3. 只使用已公开给 agent 的历史信息，不使用对手当前未揭示报价。
-4. 与 C 共同完善库存逻辑，与 A 讨论模型问题；由 B 承担主要批量评测和集成。
-
-**验收**：多种对手下均可完整运行，记录跨对手总收入与波动；不能仅以压低价格提高胜场数作为改进依据。
-
-### 6. 协作接口与代码归属（团队约定）
-
-#### 6.1 模块交接
-
-| 提供方 → 使用方 | 交接内容 | 最迟首次可用 |
+| Member | Part 1 lead responsibility | Part 2 lead responsibility |
 | --- | --- | --- |
-| A → B、C、D | 基线模型、完整预处理、购买概率调用示例 | 11 月 4 日 |
-| B → C、D | 无库存限制的静态定价函数与候选价格配置 | 11 月 4 日 |
-| D → 全员 | 统一评测入口、结果字段与首轮基线记录 | 11 月 4 日 |
-| C → D | 库存策略、状态更新规则与边界说明 | 11 月 13 日 |
-| D → B | 评测执行方法、对手配置与结果汇总方法 | 11 月 15 日 |
+| A: Demand Modeling | Data analysis, features, model training, probability evaluation/calibration, saved model | Improve demand estimates; support opponent-price analysis |
+| B: Static Pricing and Integration | Static optimization, validation, test CSV, submission integration | Batch evaluation, result aggregation, integration; fairness bonus if attempted |
+| C: Inventory-Constrained Pricing | `agent_part1.py`, inventory policy, boundary handling | Transfer and improve inventory logic with D |
+| D: Evaluation and Competition | Shared benchmark, repeated comparisons, metrics and runtime checks | `agent_part2.py`, opponent-aware policy, varied opponent suite |
 
-团队建议的概率接口为 `predict_purchase_probability(covariates, prices)`：支持批量输入，逐行返回购买概率；固定 `Covariate1/2/3` 与 `price_item` 的含义和顺序。此接口由团队实现，不是课程已有 API。若最终采用其他形式，应在模型交付时同步写清。
+### A: Specific tasks and acceptance
 
-在线 agent 保留模板的 `Agent` 与初始化签名，`action(self, obs)` 接收：
+1. Inspect data quality, price coverage, feature distributions, and purchase rates; fix a reproducible training/holdout split.
+2. Deliver a working baseline first, then compare appropriate allowed models.
+3. Evaluate probability quality and calibration across prices; work with B on realized pricing revenue.
+4. Package preprocessing and document feature order, input shapes, positive-class interpretation, model version, and loading.
+5. Commit training code and runtime artifacts in their required locations; coordinate model changes with all downstream users.
+
+Acceptance: B/C/D can load the model in the prescribed environment and obtain finite probabilities in `[0,1]` using the agreed interface.
+
+### B: Specific tasks and acceptance
+
+1. Implement static revenue optimization; document price range, search resolution, and batching.
+2. Compare predicted and realized validation revenue, investigating implausible prices with A.
+3. Generate and validate the complete test CSV; share reusable static-pricing logic with C/D.
+4. Confirm the official repository and coordinate pushes and autograder checks, with D's support for Part 1.
+5. After Part 1, take over routine multi-seed/multi-opponent experiments and final integration.
+6. Lead the optional fairness task with A only once required work is stable.
+
+Acceptance: reproducible generation, correct CSV, documented validation, and a verified push to the official submission repository.
+
+### C: Specific tasks and acceptance
+
+1. Understand the baseline, observations, and replenishment timing.
+2. Reuse A's model and B's static pricing. Begin with an inventory heuristic; evaluate opportunity-cost or dynamic-programming alternatives when justified.
+3. Handle initial/no-sale feedback, zero/scarce inventory, final steps, and replenishment resets.
+4. Compare revenue, stockouts, leftovers, and latency with D.
+5. Deliver the Part 1 agent, transfer inventory logic to D, and review the competition agent.
+
+Acceptance: complete runs, valid decisions, compatible artifacts, and evidence for the selected strategy. Retain a stable baseline if additional complexity has no consistent benefit.
+
+### D: Specific tasks and acceptance
+
+**Part 1**
+
+1. Build the shared experiment framework in the first two to three days; do not skip Part 1 evaluation to work only on competition.
+2. Fix configuration and seeds. Recreate the environment and agent per run. Record code commit, model identifier, policy parameters, and results.
+3. Aggregate total/per-customer revenue, variation across seeds, cycle-end inventory, stockout timing, and decision latency. Record invalid prices and runtime failures.
+4. Compare baseline and improved strategies with C, and assist B with CSV, dependency, and autograder checks.
+
+**Part 2**
+
+1. Lead `agent_part2.py`, starting from a working baseline before adding opponent-history and inventory responses.
+2. Build/reuse fixed-price, unconstrained model-based, aggressive low-price, adaptive-price, and self-play opponents.
+3. Use permitted observations and revealed history, never the opponent's current unrevealed quote.
+4. Work with C on inventory and A on models; hand routine batch evaluation and final integration to B.
+
+Acceptance: complete runs against multiple opponents, recorded aggregate revenue and variability, and no use of near-zero pricing merely to inflate match wins.
+
+## 10. Interfaces and Evaluation — Internal Agreement
+
+Preserve the template constructor and required agent methods. `action(self, obs)` returns a single numeric price and receives:
 
 ```text
 (new_buyer_covariates, last_sale, state, inventories, time_until_replenish)
 ```
 
-返回单个数值价格。`state` 是累计利润向量；`last_sale` 包含上一轮成交方和各 agent 上轮报价，可能存在未成交情况。库存与时间以当前传入观测为依据，不凭自行累加代替环境状态。
+`state` holds cumulative profits. `last_sale` describes the previous sale outcome and previous offered prices, including possible no-sale feedback. Update inventory/time decisions from the provided observations.
 
-#### 6.2 文件与变更管理
+- A provides a batch-capable predictor with preprocessing. Suggested internal signature: `predict_purchase_probability(covariates, prices)`; this is a proposed team interface, not a course API.
+- B provides reusable static-price optimization. Agree on feature order, price units, and shapes before integration.
+- D provides configurable evaluation and structured records; B takes over routine execution for Part 2.
+- The starter loads `purchase_model.pkl`; coordinated filename changes are allowed, while the required supporting directory stays unchanged.
+- A/B cross-review; C/D cross-review. Avoid concurrent edits to the same notebook and keep shared logic in one agreed location.
 
-- A 主改 `model_training/` 和模型产物；B 主改静态定价 notebook、CSV 生成与集成工具；C 主改 `agent_part1.py`；D 主改 `agent_part2.py` 和初期评测工具。
-- 共享预测/定价逻辑保持单一来源，变更接口前通知所有使用者。避免多人同时编辑同一个 notebook。
-- 每人使用自己的功能分支，提交小而完整的变更；合并前由指定伙伴复核，最终由 B 检查集成状态。
-- A 与 B 互审，C 与 D 互审；关键共享模型更新时，四人确认兼容性。
-- 每次实验记录：日期、代码 commit、模型版本、策略参数、种子、步数、对手、主要指标和结论；内部记录仅保存客观配置与结果，不代写报告分析。
-- 每日简短同步完成内容、阻塞项和下一步；没有实验证据的策略先标为候选，不能直接替换稳定提交版本。
+Record date, commit, model version or hash, parameters, seed, horizon, opponent, player position where applicable, metrics, and failures. Keep objective configurations/results; members write their report interpretations themselves.
 
-#### 6.3 环境配置
+Use fresh instances and 2,500-customer runs for full-length online comparisons. Match configurations/seeds for policy comparisons and exchange player positions where applicable. Suggested internal targets are five screening seeds and ten finalist seeds when feasible; these counts are not course requirements. Record actual repetitions and investigate differences small relative to variability.
 
-由每人在仓库根目录执行课程给定步骤，B 核对依赖与可复现性：
+Use probability metrics such as log loss or calibration as diagnostics, alongside realized validation revenue. Inventory utilization and match wins do not replace revenue. Check average latency with grading-machine margin, load time, and unusually slow steps.
 
-```bash
-uv venv --python 3.13
-uv pip install --python .venv -r requirements.txt
-uv pip install --python .venv ipykernel
-uv pip check --python .venv
-```
+## 11. Internal Schedule
 
-notebook 使用 `.venv` 内核。上述安装会联网，最终提交 agent 在评分运行时不得联网。
+These are team targets, not official extensions. Use America/New_York; unqualified dates mean completion by 8:00 p.m.
 
-### 7. 时间节点
+| Date | Target and accountable output |
+| --- | --- |
+| Nov 2–3 | Everyone confirms role/usernames/access; B confirms registration, Classroom50 group, and official repository |
+| Nov 3–4 | A delivers baseline model; B generates static prices; C runs capacity baseline; D records reproducible benchmark |
+| Nov 5–7 | A/B improve demand and static revenue; C/D compare inventory policies; report unresolved Part 1 access issues to staff by Nov 7 |
+| Nov 8 | Team selects candidate model/policy and records remaining issues |
+| Nov 9 | A freezes candidate artifacts; B creates test CSV; C delivers agent; D supplies repeated-run results |
+| Nov 10 | B integrates and pushes a complete candidate; D assists compatibility/format checks |
+| Nov 11 | Repair and regression checks; preserve a stable fallback |
+| Nov 12, 6:00 p.m. | Internal Part 1 submission target: verify pushed commit and checks before the 11:59 p.m. deadline |
+| Nov 13–15 | C hands inventory logic to D; D hands benchmark execution to B and delivers competition baseline |
+| Nov 16–22 | D develops competitive responses; C/A support strategy/modeling; B aggregates multi-opponent results |
+| Nov 23–27 | Robustness checks and weak-matchup analysis; team decides whether to attempt fairness bonus |
+| Nov 28–30 | Everyone studies the complete system; obtain report template and confirm oral-exam logistics |
+| Dec 1 | Full-team oral rehearsal; report unresolved Part 2 submission-access issues by this date |
+| Dec 2 | Official oral exam: explain Part 1 and current Part 2 progress |
+| Dec 3–4 | D/C finalize competition agent; A verifies artifacts; B integrates and runs regression/autograder checks |
+| Dec 5 | Final repairs, runtime checks, and version confirmation |
+| Dec 6, noon | Internal Part 2 submission target: verify push/checks before the 5:00 p.m. deadline |
+| Dec 7–9 | Everyone writes report contributions themselves using the official template; B/A finish selected bonus |
+| Dec 10 | Human report review, form/editor-access checks, and optional-artifact validation |
+| Dec 11, noon | Internal early-report target, before the official 5:00 p.m. early-bonus cutoff |
+| Dec 12, 6:00 p.m. | Fallback report/bonus completion target, before the 11:59 p.m. final deadline |
 
-#### 7.1 课程公布的时间
+Understanding and experiment records must be ready before the oral exam; the later writing window is not a reason to postpone them.
 
-| 事项 | 课程日期与时刻 | 团队动作 |
+## 12. Final Checklist and Open Items
+
+### Course compliance
+
+- [ ] All members complete organization invitations, group membership, and assignment acceptance.
+- [ ] Final code is pushed to the official repository/default branch before the relevant deadline.
+- [ ] Required agent filenames, method interfaces, and supporting directory are preserved.
+- [ ] Training/preprocessing/feature code and all runtime models/data are committed.
+- [ ] Portable paths, approved dependencies, single-core execution, no runtime internet, and average decision time comply.
+- [ ] No prohibited valuation/internal-state training or dependence on modified simulator/helper files.
+- [ ] Part 1 CSV has exact headers, complete unique test IDs, and finite nonnegative entries.
+- [ ] Relevant autograder checks pass on the final pushed version.
+- [ ] Optional bonus includes the completed notebook and exact seven-column test CSV by its deadline.
+- [ ] Everyone can explain the system.
+- [ ] Report is human-written, answers the actual template, is submitted through the current form, and grants the specified editor access.
+
+### Internal quality checks
+
+- [ ] A/B verify model and pricing compatibility.
+- [ ] C/D verify inventory boundaries and full-length runs.
+- [ ] D/B record repeated multi-opponent results and position checks where applicable.
+- [ ] Experiment records identify actual versions, parameters, and seeds.
+- [ ] Candidate selection is supported by revenue and variability, not match wins alone.
+
+### Items to confirm
+
+| Item | Owner | Follow-up |
 | --- | --- | --- |
-| Part 1 | 2026 年 11 月 12 日 23:59 | 推送 agent、静态 CSV、训练代码、模型和支持文件 |
-| 口试 | 2026 年 12 月 2 日，具体时段待课程安排 | 全员讲解 Part 1 与 Part 2 阶段进展 |
-| Part 2 | 2026 年 12 月 6 日 17:00 | 推送竞争 agent 和支持文件 |
-| 报告提前提交奖励 | 2026 年 12 月 11 日 17:00 | 按原文为 5% 提前提交 bonus，具体计分口径以课程为准 |
-| 报告最终截止及选做 bonus | 2026 年 12 月 12 日 23:59 | 提交人工报告；若做 bonus，推送 notebook 和 CSV |
+| A/B/C/D names and GitHub usernames | Everyone | At kickoff |
+| Official repository and assignment acceptance | B coordinates; everyone confirms own access | Nov 2–3 |
+| Official timezone and instruction updates | B | Course platform/EdStem before submissions |
+| Oral-exam time/location | Everyone | When posted; recheck before rehearsal |
+| Report-template questions and current submission form | B coordinates; everyone reads | Obtain before report planning; follow up if pending |
+| Fairness bonus participation | Everyone | Decide by Nov 27 |
 
-#### 7.2 Part 1 内部计划
-
-| 日期 | 里程碑 | 主责及可检查结果 |
-| --- | --- | --- |
-| 11 月 2 日 | 确认分工与提交渠道 | 全员填姓名；B 核对 Classroom50 仓库；全员确认登记、邀请和组队 |
-| 11 月 3–4 日 | 跑通完整基线 | A 交首版模型；B 跑通静态价格；C 跑通库存 agent；D 输出首轮统一评测 |
-| 11 月 5–7 日 | 模型与策略迭代 | A/B 联合验证收入；C/D 比较库存候选；11 月 7 日前联系教学团队处理未解决的 Part 1 提交权限问题 |
-| 11 月 8 日 | 收敛候选方案 | 全员确认主模型和主策略，记录相对基线的变化及已知问题 |
-| 11 月 9 日 | 形成完整提交候选 | A 固定模型接口；B 生成测试 CSV；C 提交最终候选 agent；D 给出多次运行结果 |
-| 11 月 10 日 | 完成集成并首次完整推送 | B 主导；在正式仓库运行自动检查，D 复核格式与兼容性 |
-| 11 月 11 日 | 修复与回归 | 仅做有依据的修复，重新验证所有受影响交付；保存可回退版本 |
-| 11 月 12 日 18:00 前 | 团队内部提交完成 | B 确认正式仓库默认分支、最终 commit 和自动检查结果；C/D 交叉确认 |
-| 11 月 12 日 23:59 | 课程截止 | 保留最终修复缓冲，不将此时刻作为计划首次推送时间 |
-
-#### 7.3 Part 2、口试与报告内部计划
-
-| 日期 | 里程碑 | 主责及可检查结果 |
-| --- | --- | --- |
-| 11 月 13–15 日 | 交接与竞争基线 | C 向 D 交接库存逻辑；D 向 B 交接评测；D 跑通 Part 2 基线 |
-| 11 月 16–22 日 | 多对手第一轮迭代 | D 开发对手感知策略；C 支持库存；A 支持模型；B 汇总对战收入 |
-| 11 月 23–27 日 | 稳健性与方案筛选 | B 组织重复实验；D/C 排查弱对手组合；全员决定是否投入公平性 bonus |
-| 11 月 28–30 日 | 阶段冻结与口试准备 | 四人都能运行并解释当前完整系统；各自保存人工实验笔记 |
-| 12 月 1 日 | 全员口试演练 | 两两问答，覆盖特征、概率、价格优化、库存状态、竞争与实验局限；提交权限问题最迟此日前联系教学团队 |
-| 12 月 2 日 | 课程口试 | 全员参加，说明已完成部分与后续改进计划 |
-| 12 月 3–4 日 | Part 2 最终集成 | D/C 固定竞争策略，A 固定支持文件，B 完成跨对手回归与正式仓库自动检查 |
-| 12 月 5 日 | 修复与版本确认 | B 组织最终回归；确认模型、运行时间和仓库文件完整 |
-| 12 月 6 日 12:00 前 | 团队内部提交完成 | B 推送并核对默认分支结果；课程截止为当日 17:00 |
-| 12 月 7–9 日 | 报告人工撰写、选做整理 | 四人按课程模板独立撰写各自贡献并互审；B/A 完成已决定尝试的 bonus |
-| 12 月 10 日 | 报告与 bonus 最终核对 | 全员人工检查模板问题、引用和贡献；B 核对提交表单及共享权限，验证选做文件 |
-| 12 月 11 日 12:00 前 | 内部提前提交目标 | 全员确认报告，B 协调提交；若选择提前奖励，须确保当日 17:00 前完成 |
-| 12 月 12 日 18:00 前 | 最终兜底节点 | 若未提前提交，完成最终报告；已做 bonus 则确认推送；课程最终截止为 23:59 |
-
-### 8. 评测与验收方法（团队约定）
-
-#### 8.1 模型与静态定价
-
-- A 报告留出集的概率质量指标，例如 log loss、Brier score、校准情况；这些是建议的诊断工具，不是课程额外要求。
-- B 主要比较实际验证收入、预测收入差异与最优价格分布；分类准确率或 AUC 不能单独决定采用哪个模型。
-- 验证集用于比较方案，不将测试顾客当作带标签验证集，不访问未允许的真实估值训练模型。
-- 检查 CSV 列名、行数、ID 集合、重复、缺失、有限性和非负性；行数与当前官方测试文件一致。
-
-#### 8.2 在线库存与竞争策略
-
-- 每次长实验使用 2,500 步，重新创建环境和 agent；对照方案尽可能使用相同配置与种子。
-- 初筛建议至少 5 个种子，最终候选建议至少 10 个种子；若耗时过长，可先少量筛选，但需记录实际运行数量。这些次数为团队建议。
-- 汇总每顾客收入、均值和波动，诊断售罄和剩余库存；收益差异接近随机波动时增加重复或保留简单方案。
-- Part 2 覆盖多种对手，并在适用时交换 agent 位置，排查位置偏差；结果按对手分别列出，再汇总跨对手收入。
-- 记录加载耗时与平均决策耗时，排查异常慢的步骤；本地满足限制不代表教师机器已验证，应留运行余量。
-- 检查缺货、补货前最后一步、首次反馈、未成交和对手缺货等情况。
-- 在指定依赖的干净环境做最终运行检查；autograder 通过后仍需保留本地收益验证。
-
-### 9. 提交前检查清单
-
-#### 9.1 通用
-
-- [ ] 四人均已加入正确的 Classroom50 小组并接受 assignment。
-- [ ] 已确认正式团队仓库 URL；当前个人开发仓库若不是正式仓库，已将最终内容同步到正确位置。
-- [ ] 未重命名规定 agent、方法和支持目录。
-- [ ] 所有支持文件已提交，模型可加载，无绝对路径或仓库外依赖。
-- [ ] 未提交 `.venv`，必需文件不依赖 Git LFS。
-- [ ] 使用允许依赖、单核、无联网，平均每顾客决策时间符合限制。
-- [ ] 不依赖修改后的课程模拟器或辅助文件；未使用禁止的数据或私有信息。
-- [ ] 已推送到正式仓库默认分支，核对最终 commit 和相应部分自动检查结果。
-
-#### 9.2 Part 1
-
-- [ ] 训练代码包含预处理、特征构建与模型保存流程。
-- [ ] 静态 CSV 为测试集全部顾客，三列名称、ID 和数值均正确。
-- [ ] 库存 agent 可完整运行，模型版本与 CSV 生成版本均有记录。
-- [ ] B 与 D 完成格式检查，C 与 D 完成动态策略复核。
-
-#### 9.3 Part 2
-
-- [ ] 竞争 agent 和所有支持文件完整。
-- [ ] 多对手、多次运行结果已记录；没有仅根据单场胜负选择方案。
-- [ ] D 与 C 完成策略复核，B 与 A 完成集成和模型兼容性复核。
-
-#### 9.4 口试、报告与选做
-
-- [ ] 四人均能解释完整系统和主要实验依据。
-- [ ] 报告由成员自行撰写，未使用 LLM 生成或修改任何组成部分。
-- [ ] 已使用正式报告模板，核对最新表单，并按要求给教学团队编辑权限。
-- [ ] 若完成 bonus，notebook、七列 CSV、三种 gamma 和全部测试 ID 均正确且已推送。
-- [ ] 已确认报告提交成功；若申请提前奖励，提交时刻符合要求。
-
-### 10. 需要团队补齐的信息
-
-| 待确认事项 | 负责人 | 目标节点 |
-| --- | --- | --- |
-| A/B/C/D 对应姓名和 GitHub 用户名 | 全员 | 11 月 2 日 |
-| 团队登记、组织邀请和 Classroom50 组队状态 | B 协调，全员各自确认 | 11 月 2–3 日 |
-| 正式提交仓库 URL，与当前仓库的关系 | B | 11 月 3 日 |
-| 课程平台截止时区与后续公告变化 | B | 首次正式推送前核对，之后每周复查 |
-| 口试具体时段与地点 | 全员 | 课程发布后及时确认，11 月 30 日前复查 |
-| 最新报告模板及最终提交表单 | B 协调，全员阅读 | 11 月 28 日前查找；未发布则持续跟进 |
-| 是否做公平性 bonus | 全员 | 11 月 27 日前根据主任务进度决定 |
-
-本 spec 的日期与任务状态需要随实际进度维护。任何内部延期都不能改变课程截止时间；优先保证 Part 1、Part 2 和口试准备，bonus 根据剩余时间决定。
+This English README replaces the Chinese README as the maintained execution guide. `SPEC.md` remains the earlier Chinese planning reference; if they differ, use this README and the latest official instructions.
